@@ -1,0 +1,58 @@
+# ===== Unity (잔흔 / Scars) =====
+# Unity 프로젝트는 "My project/" 하위에 있음. 자동 생성 폴더는 모두 제외.
+/[Mm]y project/[Ll]ibrary/
+/[Mm]y project/[Tt]emp/
+/[Mm]y project/[Oo]bj/
+/[Mm]y project/[Bb]uild/
+/[Mm]y project/[Bb]uilds/
+/[Mm]y project/[Ll]ogs/
+/[Mm]y project/[Uu]ser[Ss]ettings/
+/[Mm]y project/[Mm]emoryCaptures/
+/[Mm]y project/[Rr]ecordings/
+
+# Asset Store 도구 / 기타 에디터 생성물
+/[Mm]y project/[Aa]ssets/AssetStoreTools*
+/[Mm]y project/[Aa]ssets/Plugins/Editor/JetBrains*
+/[Mm]y project/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# IDE (Visual Studio / Rider / VS Code)
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity 메타 없는 폴더 경고 방지용 빈 메타
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# 크래시 리포트
+sysinfo.txt
+
+# 빌드 결과물
+*.apk
+*.aab
+*.unitypackage
+*.app
+*_BurstDebugInformation_DoNotShip/
+
+# Gradle
+.gradle/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
