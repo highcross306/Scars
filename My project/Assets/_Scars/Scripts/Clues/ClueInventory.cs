@@ -17,6 +17,9 @@ namespace Scars.Clues
             return _ids.Add(id);
         }
 
+        // 기본 카드를 업그레이드 카드로 바꾼다
+        public bool Upgrade(string fromId, string toId) { return false; }
+
         public bool Has(string id) { return !string.IsNullOrEmpty(id) && _ids.Contains(id); }
     }
 }
