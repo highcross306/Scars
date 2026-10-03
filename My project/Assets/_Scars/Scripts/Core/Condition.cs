@@ -9,6 +9,16 @@ namespace Scars.Core
         public string[] requiredFlags = new string[0];
         public string[] requiredClueIds = new string[0];
 
-        public bool IsMet(GameState state) { return false; }
+        // 빈 칸(인스펙터에서 남은 빈 항목)은 무시한다. 조건이 하나도 없으면 항상 true
+        public bool IsMet(GameState state)
+        {
+            if (requiredFlags != null)
+                foreach (var flag in requiredFlags)
+                    if (!string.IsNullOrEmpty(flag) && (state == null || !state.HasFlag(flag))) return false;
+            if (requiredClueIds != null)
+                foreach (var id in requiredClueIds)
+                    if (!string.IsNullOrEmpty(id) && (state == null || !state.Clues.Has(id))) return false;
+            return true;
+        }
     }
 }
