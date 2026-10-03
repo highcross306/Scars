@@ -1,8 +1,10 @@
 using UnityEngine;
+using Scars.Data;
 
 namespace Scars.Dialogue
 {
-    public class DialogueData : ScriptableObject
+    [CreateAssetMenu(menuName = "Scars/Dialogue")]
+    public class DialogueData : DataAsset
     {
     }
 }

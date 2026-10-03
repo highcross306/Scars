@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace Scars.Data
 {
-    public class ClueCardData : ScriptableObject
+    [CreateAssetMenu(menuName = "Scars/Clue Card")]
+    public class ClueCardData : DataAsset
     {
     }
 }

@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace Scars.Data
 {
-    public class EndingData : ScriptableObject
+    [CreateAssetMenu(menuName = "Scars/Ending")]
+    public class EndingData : DataAsset
     {
     }
 }

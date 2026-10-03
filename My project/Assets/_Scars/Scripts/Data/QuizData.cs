@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace Scars.Data
 {
-    public class QuizData : ScriptableObject
+    [CreateAssetMenu(menuName = "Scars/Quiz")]
+    public class QuizData : DataAsset
     {
     }
 }

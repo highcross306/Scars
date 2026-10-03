@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace Scars.Data
 {
-    public class CharacterProfileData : ScriptableObject
+    [CreateAssetMenu(menuName = "Scars/Character Profile")]
+    public class CharacterProfileData : DataAsset
     {
     }
 }
