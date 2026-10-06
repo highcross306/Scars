@@ -148,6 +148,21 @@ namespace Scars.Tests
             Assert.IsTrue(state.Clues.Has("base"));
         }
 
+        [TestCase("없는 보기")]
+        [TestCase("")]
+        [TestCase(null)]
+        public void Judge_InvalidAnswer_DoesNotLock(string answer)
+        {
+            var state = new GameState();
+            var s = Start(MakeTarget(judgment: MakeJudgment("y", "n", "y")), state);
+            s.Collect();
+
+            Assert.IsFalse(s.Judge(answer));
+            Assert.IsFalse(s.IsBaseCardKept, "잘못된 입력으로 판별 기회를 잃으면 안 된다");
+            Assert.IsTrue(s.Judge("y"));
+            Assert.IsTrue(s.IsUpgraded);
+        }
+
         [Test]
         public void HiddenMechanism_NoBaseCard_StepsOnly_GivesUpgradeCard()
         {

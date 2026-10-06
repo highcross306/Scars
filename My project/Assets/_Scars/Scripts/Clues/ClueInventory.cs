@@ -18,7 +18,8 @@ namespace Scars.Clues
 
         public int Count => _order.Count;
 
-        public IEnumerable<string> All => _order;
+        // 얻은 순서. 개수·번호로도 읽을 수 있다 (for 문으로 돌면 할당 없음)
+        public IReadOnlyList<string> All => _order;
 
         // 새로 얻었으면 true, 이미 있거나 빈 id거나 이미 업그레이드해서 없어진 카드면 false
         public bool Add(string id)
@@ -29,10 +30,11 @@ namespace Scars.Clues
             return true;
         }
 
-        // 기본 카드를 업그레이드 카드로 바꾼다. 기본 카드가 없거나 새 카드를 이미 가졌으면 false
+        // 기본 카드를 업그레이드 카드로 바꾼다. 기본 카드가 없거나 새 카드를 이미 가졌거나
+        // 새 카드가 이미 업그레이드로 없어진 카드면 false (Add와 같은 규칙: 없어진 카드는 되살아나지 않는다)
         public bool Upgrade(string fromId, string toId)
         {
-            if (!Has(fromId) || string.IsNullOrEmpty(toId) || _ids.Contains(toId)) return false;
+            if (!Has(fromId) || string.IsNullOrEmpty(toId) || _ids.Contains(toId) || _upgradedAway.Contains(toId)) return false;
             _order[_order.IndexOf(fromId)] = toId;
             _ids.Remove(fromId);
             _ids.Add(toId);

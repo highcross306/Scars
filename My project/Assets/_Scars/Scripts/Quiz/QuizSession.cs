@@ -21,7 +21,7 @@ namespace Scars.Quiz
         // options가 비어 있으면 아무 값이나 받는다
         public void Begin(IReadOnlyList<string> solution, IReadOnlyList<string> options)
         {
-            _solution = solution == null ? new string[0] : new List<string>(solution).ToArray();
+            _solution = Copy(solution);
             _options = options == null ? new HashSet<string>() : new HashSet<string>(options);
             _answers = new string[_solution.Length];
         }
@@ -53,5 +53,14 @@ namespace Scars.Quiz
         }
 
         bool IsValidSlot(int slot) { return slot >= 0 && slot < _answers.Length; }
+
+        // List를 거치지 않고 배열로 한 번만 복사한다
+        static string[] Copy(IReadOnlyList<string> source)
+        {
+            if (source == null) return new string[0];
+            var copy = new string[source.Count];
+            for (int i = 0; i < copy.Length; i++) copy[i] = source[i];
+            return copy;
+        }
     }
 }

@@ -220,6 +220,21 @@ namespace Scars.Tests
         }
 
         [Test]
+        public void ZeroDuration_ExpiresOnFirstTick()
+        {
+            var timer = Started(0f);
+            int count = 0;
+            timer.Expired += () => count++;
+
+            Assert.IsFalse(timer.IsExpired);
+            timer.Tick(0.1f);
+            timer.Tick(0.1f);
+
+            Assert.AreEqual(1, count);
+            Assert.IsTrue(timer.IsExpired);
+        }
+
+        [Test]
         public void NegativeDuration_ClampedToZero()
         {
             var timer = new InvestigationTimer(-5f);

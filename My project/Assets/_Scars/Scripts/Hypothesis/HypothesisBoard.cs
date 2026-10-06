@@ -8,23 +8,28 @@ namespace Scars.Hypothesis
     // 정합 가설이면 [가설 확정], 모순 가설이어도 [밀어붙이기]로 제출할 수 있다 (막지 않음)
     public class HypothesisBoard
     {
-        readonly Dictionary<HypothesisSlot, HypothesisCardData> _slots = new Dictionary<HypothesisSlot, HypothesisCardData>();
+        const int SlotCount = 3;
+
+        // 슬롯 번호(HypothesisSlot) = 배열 칸. 슬롯이 3개로 고정이라 Dictionary 대신 배열을 쓴다
+        readonly HypothesisCardData[] _slots = new HypothesisCardData[SlotCount];
+        int _filled;
 
         // 슬롯 카드가 바뀔 때마다 (실시간 명제 갱신용)
         public event Action Changed;
 
         // 카드를 잡았을 때 들어갈 수 있는 슬롯만 하이라이트·드롭 허용
-        public bool CanPlace(HypothesisCardData card, HypothesisSlot slot) { return card != null && card.slot == slot; }
+        public bool CanPlace(HypothesisCardData card, HypothesisSlot slot) { return card != null && card.slot == slot && IsValid(slot); }
 
         // 놓을 수 없으면 false. 같은 슬롯에 있던 카드는 replaced로 돌려준다 (자동 반환 후 교체)
         public bool Place(HypothesisCardData card, HypothesisSlot slot, out HypothesisCardData replaced)
         {
             replaced = null;
             if (!CanPlace(card, slot)) return false;
-            _slots.TryGetValue(slot, out var old);
+            var old = _slots[(int)slot];
             if (old == card) return true;
+            if (ReferenceEquals(old, null)) _filled++;
             replaced = old;
-            _slots[slot] = card;
+            _slots[(int)slot] = card;
             Changed?.Invoke();
             return true;
         }
@@ -32,15 +37,20 @@ namespace Scars.Hypothesis
         // 슬롯 카드 해제 (우클릭). 뺀 카드, 비어 있었으면 null
         public HypothesisCardData Remove(HypothesisSlot slot)
         {
-            if (!_slots.TryGetValue(slot, out var card)) return null;
-            _slots.Remove(slot);
+            if (!IsValid(slot) || ReferenceEquals(_slots[(int)slot], null)) return null;
+            var card = _slots[(int)slot];
+            _slots[(int)slot] = null;
+            _filled--;
             Changed?.Invoke();
             return card;
         }
 
-        public HypothesisCardData Get(HypothesisSlot slot) { return _slots.TryGetValue(slot, out var card) ? card : null; }
+        public HypothesisCardData Get(HypothesisSlot slot) { return IsValid(slot) ? _slots[(int)slot] : null; }
 
-        public bool IsComplete => _slots.Count == 3;
+        public bool IsComplete => _filled == SlotCount;
+
+        // 데이터에 잘못된 슬롯 값이 들어 있어도 배열 밖을 읽지 않는다
+        static bool IsValid(HypothesisSlot slot) { return (uint)slot < SlotCount; }
 
         // 실시간 명제. 3개 슬롯이 다 차지 않았으면 null
         public string BuildSentence()
@@ -76,16 +86,16 @@ namespace Scars.Hypothesis
 
         string Phrase(HypothesisSlot slot)
         {
-            var card = _slots[slot];
+            var card = _slots[(int)slot];
             return string.IsNullOrEmpty(card.phrase) ? card.label : card.phrase;
         }
 
         HypothesisRuleData FindRule(IEnumerable<HypothesisRuleData> rules)
         {
             if (rules == null) return null;
-            string actor = _slots[HypothesisSlot.Actor].Id;
-            string means = _slots[HypothesisSlot.Means].Id;
-            string motive = _slots[HypothesisSlot.Motive].Id;
+            string actor = _slots[(int)HypothesisSlot.Actor].Id;
+            string means = _slots[(int)HypothesisSlot.Means].Id;
+            string motive = _slots[(int)HypothesisSlot.Motive].Id;
             foreach (var rule in rules)
                 if (rule != null && rule.actorCardId == actor && rule.meansCardId == means && rule.motiveCardId == motive)
                     return rule;

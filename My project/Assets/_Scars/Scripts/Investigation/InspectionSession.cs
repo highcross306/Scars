@@ -12,6 +12,7 @@ namespace Scars.Investigation
         GameState _state;
         bool _itemUsed;
         int _step;
+        string _keptBaseFlag;
         readonly QuizSession _quiz = new QuizSession();
 
         public void Begin(InspectableData target, GameState state)
@@ -20,6 +21,8 @@ namespace Scars.Investigation
             _state = state;
             _itemUsed = false;
             _step = 0;
+            // 화면이 매 프레임 IsBaseCardKept를 읽어도 문자열을 새로 만들지 않도록 한 번만 만든다
+            _keptBaseFlag = target != null ? "inspect-kept-base:" + target.Id : null;
             _quiz.Begin(target != null ? target.judgment : null);
         }
 
@@ -72,12 +75,13 @@ namespace Scars.Investigation
         }
 
         // 판별: 심층 진실을 고르면 업그레이드 카드 획득(true), 겉보기 해석을 고르면 기본 카드 유지(false). 판별은 한 번
+        // 빈 값·보기에 없는 값은 판별로 치지 않는다 (false, 기본 카드 유지로 확정되지 않음)
         public bool Judge(string answer)
         {
             if (!CanDeepInspect() || !ItemReady || !StepsDone || _target.judgment == null) return false;
             _quiz.ClearAnswer(0);
-            _quiz.SetAnswer(0, answer);
-            if (_quiz.SlotCount > 0 && _quiz.Submit() == _quiz.SlotCount)
+            if (!_quiz.SetAnswer(0, answer)) return false;
+            if (_quiz.Submit() == _quiz.SlotCount)
             {
                 Finish();
                 return true;
@@ -88,7 +92,7 @@ namespace Scars.Investigation
 
         bool IsReady => _target != null && _state != null;
 
-        string KeptBaseFlag => "inspect-kept-base:" + _target.Id;
+        string KeptBaseFlag => _keptBaseFlag;
 
         void FinishIfNoJudgment()
         {

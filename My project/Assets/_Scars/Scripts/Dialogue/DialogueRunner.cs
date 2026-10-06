@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Scars.Core;
 
 namespace Scars.Dialogue
@@ -9,7 +8,10 @@ namespace Scars.Dialogue
     // effect에 endingId가 있으면 EndingReached를 알리고 끝난다
     public class DialogueRunner
     {
-        DialogueData _dialogue;
+        static readonly DialogueChoice[] NoChoices = new DialogueChoice[0];
+
+        // 노드 id → 노드. Start 때 한 번 만든다 (같은 id가 여럿이면 앞의 것)
+        readonly Dictionary<string, DialogueNode> _nodes = new Dictionary<string, DialogueNode>();
         GameState _state;
 
         public event Action<string> EndingReached;
@@ -20,26 +22,31 @@ namespace Scars.Dialogue
 
         public void Start(DialogueData dialogue, GameState state)
         {
-            _dialogue = dialogue;
             _state = state;
             Current = null;
+            _nodes.Clear();
             if (dialogue == null || state == null) return;
+            if (dialogue.nodes != null)
+                foreach (var node in dialogue.nodes)
+                    if (node != null && !string.IsNullOrEmpty(node.id) && !_nodes.ContainsKey(node.id))
+                        _nodes.Add(node.id, node);
             Enter(dialogue.startNodeId);
         }
 
         // 조건을 만족하는 선택지만
         public IReadOnlyList<DialogueChoice> AvailableChoices()
         {
-            if (Current == null || Current.choices == null) return new DialogueChoice[0];
-            return Current.choices
-                .Where(c => c != null && (c.condition == null || c.condition.IsMet(_state)))
-                .ToList();
+            if (Current == null || Current.choices == null) return NoChoices;
+            var available = new List<DialogueChoice>(Current.choices.Count);
+            foreach (var choice in Current.choices)
+                if (IsAvailable(choice)) available.Add(choice);
+            return available;
         }
 
         // 고를 선택지가 없을 때만 nextId로 넘어간다. nextId가 비면 대화가 끝난다
         public bool Advance()
         {
-            if (Current == null || AvailableChoices().Count > 0) return false;
+            if (Current == null || HasAvailableChoice()) return false;
             Enter(Current.nextId);
             return true;
         }
@@ -47,9 +54,9 @@ namespace Scars.Dialogue
         // index는 AvailableChoices() 기준. 증거 제시 선택지는 Present로만 고른다
         public bool Choose(int index)
         {
-            var choices = AvailableChoices();
-            if (index < 0 || index >= choices.Count || NeedsClues(choices[index])) return false;
-            Take(choices[index]);
+            var choice = AvailableAt(index);
+            if (choice == null || NeedsClues(choice)) return false;
+            Take(choice);
             return true;
         }
 
@@ -57,22 +64,71 @@ namespace Scars.Dialogue
         // 맞지 않으면 아무것도 바뀌지 않는다(false)
         public bool Present(IEnumerable<string> clueIds)
         {
-            if (Current == null || clueIds == null) return false;
-            var given = new HashSet<string>(clueIds.Where(id => !string.IsNullOrEmpty(id)));
-            if (given.Count == 0 || given.Any(id => !_state.Clues.Has(id))) return false;
-            foreach (var choice in AvailableChoices())
+            if (Current == null || clueIds == null || Current.choices == null) return false;
+            var given = new HashSet<string>();
+            foreach (var id in clueIds)
             {
-                if (!NeedsClues(choice)) continue;
-                if (!given.SetEquals(choice.presentClueIds.Where(id => !string.IsNullOrEmpty(id)))) continue;
+                if (string.IsNullOrEmpty(id)) continue;
+                if (!_state.Clues.Has(id)) return false;
+                given.Add(id);
+            }
+            if (given.Count == 0) return false;
+
+            foreach (var choice in Current.choices)
+            {
+                if (!IsAvailable(choice) || !NeedsClues(choice) || !SameClues(given, choice.presentClueIds)) continue;
                 Take(choice);
                 return true;
             }
             return false;
         }
 
+        bool IsAvailable(DialogueChoice choice)
+        {
+            return choice != null && (choice.condition == null || choice.condition.IsMet(_state));
+        }
+
+        bool HasAvailableChoice()
+        {
+            if (Current.choices == null) return false;
+            foreach (var choice in Current.choices)
+                if (IsAvailable(choice)) return true;
+            return false;
+        }
+
+        // AvailableChoices()[index]와 같은 선택지를 리스트를 만들지 않고 찾는다. 범위 밖이면 null
+        DialogueChoice AvailableAt(int index)
+        {
+            if (Current == null || Current.choices == null || index < 0) return null;
+            foreach (var choice in Current.choices)
+            {
+                if (!IsAvailable(choice)) continue;
+                if (index == 0) return choice;
+                index--;
+            }
+            return null;
+        }
+
         static bool NeedsClues(DialogueChoice choice)
         {
-            return choice.presentClueIds != null && choice.presentClueIds.Any(id => !string.IsNullOrEmpty(id));
+            if (choice.presentClueIds == null) return false;
+            foreach (var id in choice.presentClueIds)
+                if (!string.IsNullOrEmpty(id)) return true;
+            return false;
+        }
+
+        // 빈 칸은 무시하고, 겹치는 id는 하나로 본다 (HashSet.SetEquals와 같은 결과). 제시 카드는 몇 장뿐이라 새 집합을 만들지 않는다
+        static bool SameClues(HashSet<string> given, string[] required)
+        {
+            int distinct = 0;
+            for (int i = 0; i < required.Length; i++)
+            {
+                var id = required[i];
+                if (string.IsNullOrEmpty(id) || Array.IndexOf(required, id, 0, i) >= 0) continue;
+                if (!given.Contains(id)) return false;
+                distinct++;
+            }
+            return distinct == given.Count;
         }
 
         void Take(DialogueChoice choice)
@@ -84,9 +140,8 @@ namespace Scars.Dialogue
         // 없는 id면 대화가 끝난다
         void Enter(string nodeId)
         {
-            Current = string.IsNullOrEmpty(nodeId) || _dialogue.nodes == null
-                ? null
-                : _dialogue.nodes.FirstOrDefault(n => n != null && n.id == nodeId);
+            Current = null;
+            if (!string.IsNullOrEmpty(nodeId) && _nodes.TryGetValue(nodeId, out var found)) Current = found;
             if (Current != null) ApplyAndCheckEnding(Current.onEnter);
         }
 

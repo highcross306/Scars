@@ -245,6 +245,28 @@ namespace Scars.Tests
             Assert.IsTrue(r.Present(new[] { "c3", "c1", "c2" }));
         }
 
+        [Test]
+        public void Present_DuplicatesAndBlanks_AreIgnored()
+        {
+            var state = new GameState();
+            foreach (var id in new[] { "c1", "c2" }) state.Clues.Add(id);
+            var r = Run(MakeDialogue("a",
+                Node("a", null, Choice("b", present: new[] { "c1", "", "c2", "c1" })), Node("b")), state);
+
+            Assert.IsTrue(r.Present(new[] { "c2", "c1", "c2", null }));
+            Assert.AreEqual("b", r.Current.id);
+        }
+
+        [Test]
+        public void Start_DuplicateNodeId_FirstWins()
+        {
+            var first = Node("a", "b");
+            var second = Node("a");
+            var r = Run(MakeDialogue("a", first, second, Node("b")), new GameState());
+
+            Assert.AreSame(first, r.Current);
+        }
+
         [TestCase("c1,c2")]
         [TestCase("c1,c2,c3,c4")]
         [TestCase("c4")]

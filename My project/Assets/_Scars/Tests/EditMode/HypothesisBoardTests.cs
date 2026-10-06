@@ -208,6 +208,33 @@ namespace Scars.Tests
         }
 
         [Test]
+        public void InvalidSlotValue_IsRefusedWithoutError()
+        {
+            var board = new HypothesisBoard();
+            var card = Card("bad", (HypothesisSlot)7, "이상한 카드");
+
+            Assert.IsFalse(board.CanPlace(card, (HypothesisSlot)7));
+            Assert.IsFalse(board.Place(card, (HypothesisSlot)7, out _));
+            Assert.IsNull(board.Get((HypothesisSlot)7));
+            Assert.IsNull(board.Remove((HypothesisSlot)7));
+        }
+
+        [Test]
+        public void ReplaceAndRemove_KeepsCompleteCountRight()
+        {
+            var board = FullBoard("고양이", "비밀 통로", "생선 독차지");
+            Put(board, Card("a2", HypothesisSlot.Actor, "곰"));
+            Assert.IsTrue(board.IsComplete, "교체는 칸 수를 바꾸지 않는다");
+
+            board.Remove(HypothesisSlot.Means);
+            board.Remove(HypothesisSlot.Means);
+            Assert.IsFalse(board.IsComplete);
+
+            Put(board, Card("m2", HypothesisSlot.Means, "꿀단지 조작"));
+            Assert.IsTrue(board.IsComplete);
+        }
+
+        [Test]
         public void Evaluate_Incomplete_IsNull()
         {
             var board = new HypothesisBoard();
@@ -215,6 +242,8 @@ namespace Scars.Tests
 
             Assert.IsNull(board.Evaluate(new HypothesisRuleData[0]));
         }
+
+        // ── 강제 제출 (시간 초과) ──
 
         [Test]
         public void EvaluateForced_Incomplete_IsIncompleteContradiction()

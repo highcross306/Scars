@@ -106,6 +106,18 @@ namespace Scars.Tests
         }
 
         [Test]
+        public void Upgrade_BackToUpgradedAwayCard_IsRejected()
+        {
+            var inv = new ClueInventory();
+            inv.Add("a");
+            inv.Upgrade("a", "a+");
+
+            Assert.IsFalse(inv.Upgrade("a+", "a"));
+            Assert.IsTrue(inv.Has("a+"));
+            Assert.IsFalse(inv.Has("a"));
+        }
+
+        [Test]
         public void Events_FireOnlyOnRealChanges()
         {
             var inv = new ClueInventory();

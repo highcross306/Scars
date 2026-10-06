@@ -19,6 +19,7 @@ namespace Scars.Investigation
         float _remaining;
         bool _started;
         bool _stopped;
+        bool _expired;
 
         public InvestigationTimer(float seconds)
         {
@@ -48,7 +49,8 @@ namespace Scars.Investigation
 
         public bool IsPaused => _pauseReasons.Count > 0;
 
-        public bool IsExpired => _started && _remaining <= 0f;
+        // Expired를 알린 뒤에만 true (0초 타이머도 첫 Tick에서 알린다)
+        public bool IsExpired => _expired;
 
         // 스스로 나가서 멈춘 상태
         public bool IsStopped => _stopped;
@@ -78,7 +80,11 @@ namespace Scars.Investigation
                 LastMinuteStarted?.Invoke();
             }
 
-            if (_remaining <= 0f) Expired?.Invoke();
+            if (_remaining <= 0f)
+            {
+                _expired = true;
+                Expired?.Invoke();
+            }
         }
 
         // reason 예: "journal", "clueDetail", "hypothesis", "pauseMenu", "dialogue", "judgment"
