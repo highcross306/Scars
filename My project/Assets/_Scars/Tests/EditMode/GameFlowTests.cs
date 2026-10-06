@@ -217,6 +217,58 @@ namespace Scars.Tests
             Assert.AreEqual("interro", flow.CurrentPhase.Id);
         }
 
+        // 서재(제한 시간) → 시간 초과 → 가설 단계
+        GameFlow TimedOutIntoHypothesis()
+        {
+            TimedPhase("study", 10f);
+            Phase("hypo", PhaseKind.Hypothesis, next: "interro");
+            Phase("interro", PhaseKind.Interrogation);
+            var flow = Flow();
+            flow.NewGame("study");
+            flow.Timer.Start();
+            flow.Tick(11f);
+            return flow;
+        }
+
+        [Test]
+        public void IsForcedHypothesis_OnlyAfterTimeout()
+        {
+            var flow = TimedOutIntoHypothesis();
+            Assert.IsTrue(flow.IsForcedHypothesis);
+
+            Phase("hypo2", PhaseKind.Hypothesis);
+            var normal = Flow();
+            normal.NewGame("hypo2");
+            Assert.IsFalse(normal.IsForcedHypothesis);
+        }
+
+        [Test]
+        public void ConfirmHypothesis_IncompleteWhenForced_SetsFlagsAndGoesNext()
+        {
+            var flow = TimedOutIntoHypothesis();
+
+            Assert.IsTrue(flow.ConfirmHypothesis(new HypothesisBoard().EvaluateForced(null)));
+
+            Assert.IsTrue(flow.State.HasFlag("hypothesis:Contradiction"));
+            Assert.IsTrue(flow.State.HasFlag("hypothesis:Incomplete"));
+            Assert.AreEqual("interro", flow.CurrentPhase.Id);
+            Assert.IsFalse(flow.IsForcedHypothesis);
+        }
+
+        [Test]
+        public void ConfirmHypothesis_IncompleteWithoutTimeout_Rejected()
+        {
+            Phase("hypo", PhaseKind.Hypothesis, next: "interro");
+            Phase("interro", PhaseKind.Interrogation);
+            var flow = Flow();
+            flow.NewGame("hypo");
+
+            Assert.IsFalse(flow.ConfirmHypothesis(new HypothesisBoard().EvaluateForced(null)));
+
+            Assert.AreEqual("hypo", flow.CurrentPhase.Id);
+            Assert.IsFalse(flow.State.HasFlag("hypothesis:Contradiction"));
+        }
+
         [Test]
         public void ConfirmHypothesis_ContradictionWithoutKey_KindFlagOnly()
         {

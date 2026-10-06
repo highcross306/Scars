@@ -215,5 +215,41 @@ namespace Scars.Tests
 
             Assert.IsNull(board.Evaluate(new HypothesisRuleData[0]));
         }
+
+        [Test]
+        public void EvaluateForced_Incomplete_IsIncompleteContradiction()
+        {
+            var board = new HypothesisBoard();
+            Put(board, Card("a", HypothesisSlot.Actor, "고양이"));
+
+            var result = board.EvaluateForced(new HypothesisRuleData[0]);
+
+            Assert.AreEqual(HypothesisKind.Contradiction, result.Kind);
+            Assert.IsTrue(result.Incomplete);
+            Assert.IsNull(result.ResultKey);
+            Assert.IsNull(result.Sentence);
+        }
+
+        [Test]
+        public void EvaluateForced_Empty_IsIncompleteContradiction()
+        {
+            var result = new HypothesisBoard().EvaluateForced(null);
+
+            Assert.AreEqual(HypothesisKind.Contradiction, result.Kind);
+            Assert.IsTrue(result.Incomplete);
+        }
+
+        [Test]
+        public void EvaluateForced_Complete_SameAsEvaluate()
+        {
+            var board = FullBoard("고양이", "비밀 통로", "생선 독차지");
+            var rules = new[] { Rule("a", "m", "o", HypothesisKind.Consistent, "A") };
+
+            var result = board.EvaluateForced(rules);
+
+            Assert.AreEqual(HypothesisKind.Consistent, result.Kind);
+            Assert.AreEqual("A", result.ResultKey);
+            Assert.IsFalse(result.Incomplete);
+        }
     }
 }

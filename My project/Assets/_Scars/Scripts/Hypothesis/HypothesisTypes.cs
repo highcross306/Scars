@@ -11,5 +11,7 @@ namespace Scars.Hypothesis
         public string ResultKey;
         public string Sentence;
         public string Warning;
+        // 빈 칸이 있는 채로 강제 제출됨 (시간 초과). 문장은 없다
+        public bool Incomplete;
     }
 }

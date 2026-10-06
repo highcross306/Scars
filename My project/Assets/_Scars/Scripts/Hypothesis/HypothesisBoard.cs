@@ -67,6 +67,13 @@ namespace Scars.Hypothesis
             };
         }
 
+        // 시간 초과로 강제 제출할 때. 다 찼으면 Evaluate와 같고, 빈 칸이 있으면 억지(모순) 가설로 제출된다
+        public HypothesisResult EvaluateForced(IEnumerable<HypothesisRuleData> rules)
+        {
+            if (IsComplete) return Evaluate(rules);
+            return new HypothesisResult { Kind = HypothesisKind.Contradiction, Incomplete = true };
+        }
+
         string Phrase(HypothesisSlot slot)
         {
             var card = _slots[slot];
