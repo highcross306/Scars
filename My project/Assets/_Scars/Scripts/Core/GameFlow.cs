@@ -1,4 +1,5 @@
 using System;
+using Scars.Controls;
 using Scars.Data;
 using Scars.Dialogue;
 using Scars.Hypothesis;
@@ -33,6 +34,9 @@ namespace Scars.Core
         public event Action<string> EndingReached;
 
         public GameState State { get; private set; } = new GameState();
+
+        // 열린 화면들 (일지·가설·확대 조사·메뉴). InputRouter가 우클릭·Tab·C·ESC를 여기로 보낸다
+        public ScreenStack Screens { get; } = new ScreenStack();
 
         public PhaseData CurrentPhase { get; private set; }
 
