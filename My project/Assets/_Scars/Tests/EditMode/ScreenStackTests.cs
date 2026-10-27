@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using Scars.Controls;
+using Scars.Investigation;
 
 namespace Scars.Tests
 {
@@ -14,6 +15,8 @@ namespace Scars.Tests
         public FakeScreen(string name = "screen") { Name = name; }
 
         public bool CanClose { get; set; } = true;
+
+        public string PauseReason { get; set; }
 
         public bool IsOpen => OpenCount > CloseCount;
 
@@ -196,6 +199,126 @@ namespace Scars.Tests
 
             Assert.IsTrue(stack.IsEmpty);
             Assert.IsFalse(board.IsOpen);
+        }
+
+        // ── 조사 타이머 멈춤 ──
+
+        static InvestigationTimer Running()
+        {
+            var timer = new InvestigationTimer(420f);
+            timer.Start();
+            return timer;
+        }
+
+        [Test]
+        public void ScreenWithReason_PausesTimer_UntilClosed()
+        {
+            var timer = Running();
+            var stack = new ScreenStack { Timer = timer };
+            var journal = new FakeScreen { PauseReason = "journal" };
+
+            stack.Push(journal);
+            timer.Tick(10f);
+            Assert.AreEqual(420f, timer.Remaining);
+
+            stack.Back();
+            timer.Tick(10f);
+            Assert.AreEqual(410f, timer.Remaining);
+        }
+
+        [Test]
+        public void ScreenWithoutReason_TimerKeepsRunning()
+        {
+            var timer = Running();
+            var stack = new ScreenStack { Timer = timer };
+            stack.Push(new FakeScreen("zoom"));   // 확대 조사는 시간이 흐른다
+
+            timer.Tick(10f);
+            Assert.AreEqual(410f, timer.Remaining);
+        }
+
+        [Test]
+        public void TwoScreens_ResumesOnlyWhenAllClosed()
+        {
+            var timer = Running();
+            var stack = new ScreenStack { Timer = timer };
+            var journal = new FakeScreen("journal") { PauseReason = "journal" };
+            var board = new FakeScreen("board") { PauseReason = "hypothesis" };
+            stack.Push(journal);
+            stack.Push(board);
+
+            stack.Back();
+            Assert.IsTrue(timer.IsPaused);
+            stack.Back();
+            Assert.IsFalse(timer.IsPaused);
+        }
+
+        [Test]
+        public void SameReasonTwice_ResumesOnlyWhenBothClosed()
+        {
+            var timer = Running();
+            var stack = new ScreenStack { Timer = timer };
+            var a = new FakeScreen("clue a") { PauseReason = "clueDetail" };
+            var b = new FakeScreen("clue b") { PauseReason = "clueDetail" };
+            stack.Push(a);
+            stack.Push(b);
+
+            stack.Close(a);
+            Assert.IsTrue(timer.IsPaused);
+            stack.Close(b);
+            Assert.IsFalse(timer.IsPaused);
+        }
+
+        [Test]
+        public void ScreenReason_DoesNotClashWithDialoguePause()
+        {
+            var timer = Running();
+            var stack = new ScreenStack { Timer = timer };
+            timer.Pause("dialogue");
+            var screen = new FakeScreen { PauseReason = "dialogue" };
+
+            stack.Push(screen);
+            stack.Back();
+
+            Assert.IsTrue(timer.IsPaused);   // 대화 멈춤은 그대로
+        }
+
+        [Test]
+        public void TimerSetLater_PausesForScreensAlreadyOpen()
+        {
+            var stack = new ScreenStack();
+            stack.Push(new FakeScreen { PauseReason = "journal" });
+            var timer = Running();
+
+            stack.Timer = timer;
+
+            Assert.IsTrue(timer.IsPaused);
+        }
+
+        [Test]
+        public void TimerReplaced_OldResumed_NewPaused()
+        {
+            var old = Running();
+            var stack = new ScreenStack { Timer = old };
+            stack.Push(new FakeScreen { PauseReason = "journal" });
+            var next = Running();
+
+            stack.Timer = next;
+
+            Assert.IsFalse(old.IsPaused);
+            Assert.IsTrue(next.IsPaused);
+        }
+
+        [Test]
+        public void Clear_ResumesTimer()
+        {
+            var timer = Running();
+            var stack = new ScreenStack { Timer = timer };
+            stack.Push(new FakeScreen { PauseReason = "hypothesis", CanClose = false });
+
+            stack.Clear();
+
+            Assert.IsFalse(timer.IsPaused);
         }
 
         [Test]

@@ -87,7 +87,7 @@ namespace Scars.Investigation
             }
         }
 
-        // reason 예: "journal", "clueDetail", "hypothesis", "pauseMenu", "dialogue", "judgment"
+        // reason: GameFlow의 "dialogue", 화면은 ScreenStack이 "screen:<IScreen.PauseReason>"로 넣는다
         public void Pause(string reason)
         {
             if (!string.IsNullOrEmpty(reason)) _pauseReasons.Add(reason);

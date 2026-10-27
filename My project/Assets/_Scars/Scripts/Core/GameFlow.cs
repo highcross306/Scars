@@ -44,6 +44,7 @@ namespace Scars.Core
         public DialogueRunner Dialogue { get; private set; }
 
         // 제한 시간이 있는 단계에서만 있다. 시작(Start)은 방향 조작이 가능해지는 순간 화면 쪽이 부른다
+        // 멈춤: 대화는 GameFlow가, 일지·단서 상세·가설·ESC 메뉴·판별 질문은 Screens가 (View는 Pause/Resume을 직접 부르지 않는다)
         public InvestigationTimer Timer { get; private set; }
 
         public bool IsTimedOut { get; private set; }
@@ -89,6 +90,8 @@ namespace Scars.Core
                 Timer = new InvestigationTimer(phase.timeLimitSeconds);
                 Timer.Expired += OnTimerExpired;
             }
+            // 일지·가설·메뉴 등 화면이 열린 동안 멈춘다 (화면의 PauseReason)
+            Screens.Timer = Timer;
 
             phase.onEnter?.Apply(State);
             PhaseChanged?.Invoke(phase);

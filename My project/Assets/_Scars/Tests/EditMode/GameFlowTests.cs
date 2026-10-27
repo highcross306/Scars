@@ -422,6 +422,57 @@ namespace Scars.Tests
         }
 
         [Test]
+        public void Screens_PauseTimer_WhileOpen()
+        {
+            TimedPhase("study", 420f);
+            var flow = Flow();
+            flow.NewGame("study");
+            flow.Timer.Start();
+            var journal = new FakeScreen("journal") { PauseReason = "journal" };
+
+            flow.Screens.Push(journal);
+            flow.Tick(10f);
+            Assert.AreEqual(420f, flow.Timer.Remaining);
+
+            flow.Screens.Back();
+            flow.Tick(10f);
+            Assert.AreEqual(410f, flow.Timer.Remaining);
+        }
+
+        [Test]
+        public void ScreenAndDialogue_ResumeOnlyWhenBothDone()
+        {
+            TimedPhase("study", 420f);
+            Talk("mono");
+            var flow = Flow();
+            flow.NewGame("study");
+            flow.Timer.Start();
+            flow.Screens.Push(new FakeScreen("journal") { PauseReason = "journal" });
+            flow.StartDialogue("mono");
+
+            flow.Screens.Back();
+            flow.Tick(10f);
+            Assert.AreEqual(420f, flow.Timer.Remaining);   // 대화 중
+
+            flow.Dialogue.Advance();
+            flow.Tick(10f);
+            Assert.AreEqual(410f, flow.Timer.Remaining);
+        }
+
+        [Test]
+        public void UntimedPhase_ScreensHaveNoTimer()
+        {
+            TimedPhase("study", 420f, next: "next");
+            Phase("next");
+            var flow = Flow();
+            flow.NewGame("study");
+            Assert.AreSame(flow.Timer, flow.Screens.Timer);
+
+            flow.CompletePhase();
+            Assert.IsNull(flow.Screens.Timer);
+        }
+
+        [Test]
         public void LeaveByDoor_StopsTimer_GoesNext()
         {
             TimedPhase("study", 420f, next: "next");
