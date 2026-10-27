@@ -291,6 +291,78 @@ namespace Scars.Tests
             Assert.IsFalse(flow.ConfirmHypothesis(null));
         }
 
+        // ── 화면 (ScreenStack) ──
+
+        [Test]
+        public void GoTo_ClosesOpenScreens()
+        {
+            Phase("p1", next: "p2");
+            Phase("p2");
+            var flow = Flow();
+            flow.NewGame("p1");
+            var journal = new FakeScreen("journal");
+            flow.Screens.Push(journal);
+
+            flow.CompletePhase();
+
+            Assert.IsTrue(flow.Screens.IsEmpty);
+            Assert.IsFalse(journal.IsOpen);
+        }
+
+        [Test]
+        public void Timeout_ClosesInvestigationScreens_BeforeHypothesis()
+        {
+            TimedPhase("study", 10f);
+            Phase("hypo", PhaseKind.Hypothesis, next: "interro");
+            var flow = Flow();
+            flow.NewGame("study");
+            flow.Timer.Start();
+            var journal = new FakeScreen("journal");
+            flow.Screens.Push(journal);
+
+            flow.Tick(11f);
+
+            Assert.AreEqual("hypo", flow.CurrentPhase.Id);
+            Assert.IsFalse(journal.IsOpen);
+            Assert.IsTrue(flow.Screens.IsEmpty);
+        }
+
+        [Test]
+        public void ForcedHypothesis_BoardCannotClose_UntilConfirmed()
+        {
+            var flow = TimedOutIntoHypothesis();
+            // 가설 View의 CanClose = !IsForcedHypothesis
+            var board = new FakeScreen("hypothesis") { CanClose = !flow.IsForcedHypothesis };
+            flow.Screens.Push(board);
+
+            Assert.IsFalse(flow.Screens.Back());
+            Assert.IsFalse(flow.Screens.Toggle(board));
+            Assert.IsTrue(board.IsOpen);
+
+            // ESC 메뉴는 그 위에 열고 닫을 수 있다
+            var menu = new FakeScreen("menu");
+            Assert.IsTrue(flow.Screens.Push(menu));
+            Assert.IsTrue(flow.Screens.Back());
+            Assert.AreSame(board, flow.Screens.Top);
+
+            // 제출하면 심문 단계로 넘어가며 닫힌다
+            flow.ConfirmHypothesis(new HypothesisBoard().EvaluateForced(null));
+            Assert.AreEqual("interro", flow.CurrentPhase.Id);
+            Assert.IsFalse(board.IsOpen);
+        }
+
+        [Test]
+        public void NormalHypothesis_BoardCloses()
+        {
+            Phase("hypo", PhaseKind.Hypothesis, next: "interro");
+            var flow = Flow();
+            flow.NewGame("hypo");
+            var board = new FakeScreen("hypothesis") { CanClose = !flow.IsForcedHypothesis };
+            flow.Screens.Push(board);
+
+            Assert.IsTrue(flow.Screens.Back());
+        }
+
         // ── 조사 제한 시간 ──
 
         [Test]

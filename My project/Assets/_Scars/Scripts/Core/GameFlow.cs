@@ -80,6 +80,8 @@ namespace Scars.Core
             Dialogue = null;
             IsTimedOut = false;
             _inTimeoutDialogue = false;
+            // 열린 화면은 단계가 바뀌면 모두 닫는다 (씬이 바뀌면 화면도 사라지고, 시간 초과 뒤 가설 단계는 빈 화면에서 시작)
+            Screens.Clear();
             CurrentPhase = phase;
 
             if (phase.HasTimeLimit)
@@ -131,7 +133,7 @@ namespace Scars.Core
             Timer?.Tick(deltaTime);
         }
 
-        // 시간 초과로 들어온 가설 단계. 창을 닫을 수 없고, 빈 칸이 있어도 제출(HypothesisBoard.EvaluateForced)할 수 있다
+        // 시간 초과로 들어온 가설 단계. 창을 닫을 수 없고(가설 View의 IScreen.CanClose = !IsForcedHypothesis), 빈 칸이 있어도 제출(HypothesisBoard.EvaluateForced)할 수 있다
         public bool IsForcedHypothesis => !IsEnded && CurrentPhase != null && CurrentPhase.kind == PhaseKind.Hypothesis && State.HasFlag(TimeoutFlag);
 
         // 가설 확정 (정합이든 모순 밀어붙이기든). 결과를 플래그로 남기고 다음 단계(심문)로 간다

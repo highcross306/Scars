@@ -13,6 +13,8 @@ namespace Scars.Tests
 
         public FakeScreen(string name = "screen") { Name = name; }
 
+        public bool CanClose { get; set; } = true;
+
         public bool IsOpen => OpenCount > CloseCount;
 
         public void Open() { OpenCount++; }
@@ -137,6 +139,63 @@ namespace Scars.Tests
 
             Assert.IsTrue(stack.IsEmpty);
             CollectionAssert.AreEqual(new IScreen[] { b, a }, order);
+        }
+
+        // ── 닫을 수 없는 화면 (시간 초과 뒤 가설 창) ──
+
+        [Test]
+        public void Locked_BackCloseToggle_Refused()
+        {
+            var stack = new ScreenStack();
+            var board = new FakeScreen { CanClose = false };
+            stack.Push(board);
+
+            Assert.IsFalse(stack.Back());
+            Assert.IsFalse(stack.Close(board));
+            Assert.IsFalse(stack.Toggle(board));
+
+            Assert.IsTrue(board.IsOpen);
+            Assert.AreSame(board, stack.Top);
+        }
+
+        [Test]
+        public void Locked_ScreenAboveStillCloses()
+        {
+            var stack = new ScreenStack();
+            var board = new FakeScreen("board") { CanClose = false };
+            var menu = new FakeScreen("menu");
+            stack.Push(board);
+            stack.Push(menu);
+
+            Assert.IsTrue(stack.Back());
+            Assert.IsFalse(menu.IsOpen);
+            Assert.IsFalse(stack.Back());
+            Assert.IsTrue(board.IsOpen);
+        }
+
+        [Test]
+        public void Locked_ClosesWhenAllowedAgain()
+        {
+            var stack = new ScreenStack();
+            var board = new FakeScreen { CanClose = false };
+            stack.Push(board);
+
+            board.CanClose = true;
+            Assert.IsTrue(stack.Back());
+            Assert.IsFalse(board.IsOpen);
+        }
+
+        [Test]
+        public void Clear_ClosesLockedToo()
+        {
+            var stack = new ScreenStack();
+            var board = new FakeScreen { CanClose = false };
+            stack.Push(board);
+
+            stack.Clear();
+
+            Assert.IsTrue(stack.IsEmpty);
+            Assert.IsFalse(board.IsOpen);
         }
 
         [Test]
