@@ -35,6 +35,9 @@ namespace Scars.Core
 
         public GameState State { get; private set; } = new GameState();
 
+        // View가 데이터(가설 카드·규칙 등)를 찾을 때
+        public GameDatabase Database => _database;
+
         // 열린 화면들 (일지·가설·확대 조사·메뉴). InputRouter가 우클릭·Tab·C·ESC를 여기로 보낸다
         public ScreenStack Screens { get; } = new ScreenStack();
 

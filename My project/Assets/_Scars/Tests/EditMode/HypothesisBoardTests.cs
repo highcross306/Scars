@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
+using Scars.Core;
 using Scars.Data;
 using Scars.Hypothesis;
 using UnityEditor;
@@ -279,6 +280,77 @@ namespace Scars.Tests
             Assert.AreEqual(HypothesisKind.Consistent, result.Kind);
             Assert.AreEqual("A", result.ResultKey);
             Assert.IsFalse(result.Incomplete);
+        }
+
+        // ── 조립 중 실시간 문장 · 제출 미리보기 · 손패 ──
+
+        [Test]
+        public void BuildDraftSentence_Empty_ShowsSlotNames()
+        {
+            Assert.AreEqual("[행위자] 은/는 [수단] 을/를 통해 [동기] 을/를 꾀했다.", new HypothesisBoard().BuildDraftSentence());
+        }
+
+        [Test]
+        public void BuildDraftSentence_Partial_FillsPlacedSlotsOnly()
+        {
+            var board = new HypothesisBoard();
+            Put(board, Card("m", HypothesisSlot.Means, "비밀 통로"));
+
+            Assert.AreEqual("[행위자] 은/는 비밀 통로를 통해 [동기] 을/를 꾀했다.", board.BuildDraftSentence());
+        }
+
+        [Test]
+        public void BuildDraftSentence_Complete_SameAsBuildSentence()
+        {
+            var board = FullBoard("곰", "꿀단지 조작", "겨울잠 함정");
+
+            Assert.AreEqual(board.BuildSentence(), board.BuildDraftSentence());
+        }
+
+        [Test]
+        public void Preview_NotForced_NeedsAllSlots()
+        {
+            var board = new HypothesisBoard();
+            Put(board, Card("a", HypothesisSlot.Actor, "고양이"));
+
+            Assert.IsNull(board.Preview(new HypothesisRuleData[0], false));
+        }
+
+        [Test]
+        public void Preview_Forced_Incomplete_IsIncomplete()
+        {
+            var result = new HypothesisBoard().Preview(new HypothesisRuleData[0], true);
+
+            Assert.IsTrue(result.Incomplete);
+            Assert.AreEqual(HypothesisKind.Contradiction, result.Kind);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Preview_Complete_FollowsRules(bool forced)
+        {
+            var board = FullBoard("고양이", "비밀 통로", "생선 독차지");
+            var rules = new[] { Rule("a", "m", "o", HypothesisKind.Consistent, "truth") };
+
+            var result = board.Preview(rules, forced);
+
+            Assert.AreEqual(HypothesisKind.Consistent, result.Kind);
+            Assert.AreEqual("truth", result.ResultKey);
+            Assert.IsFalse(result.Incomplete);
+        }
+
+        [Test]
+        public void UnlockedCards_OnlyCardsWhoseConditionIsMet()
+        {
+            var open = Card("open", HypothesisSlot.Actor, "고양이");
+            var locked = Card("locked", HypothesisSlot.Means, "비밀 통로");
+            locked.unlock = new Condition { requiredClueIds = new[] { "clue" } };
+            var state = new GameState();
+
+            CollectionAssert.AreEqual(new[] { open }, HypothesisBoard.UnlockedCards(new[] { open, locked }, state));
+
+            state.Clues.Add("clue");
+            CollectionAssert.AreEqual(new[] { open, locked }, HypothesisBoard.UnlockedCards(new[] { open, locked }, state));
         }
     }
 }

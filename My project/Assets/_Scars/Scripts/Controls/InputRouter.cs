@@ -1,4 +1,5 @@
 using Scars.Core;
+using Scars.Data;
 using UnityEngine;
 
 namespace Scars.Controls
@@ -11,6 +12,8 @@ namespace Scars.Controls
         [SerializeField] MonoBehaviour caseJournal;
         [SerializeField] MonoBehaviour characterJournal;
         [SerializeField] MonoBehaviour pauseMenu;
+        [Tooltip("가설 단계에서는 Tab이 이 화면을 연다 (서재 씬만)")]
+        [SerializeField] MonoBehaviour hypothesisBoard;
 
         InputCommands _commands;
 
@@ -29,7 +32,8 @@ namespace Scars.Controls
         void Update()
         {
             if (_commands == null) return;
-            if (Input.GetMouseButtonDown(1)) Back();
+            _commands.CaseJournal = IsHypothesisPhase && hypothesisBoard is IScreen board ? board : caseJournal as IScreen;
+            if (Input.GetMouseButtonDown(1) && !RightClick.IsOverTarget()) Back();
             if (Input.GetKeyDown(KeyCode.Tab)) ToggleCaseJournal();
             if (Input.GetKeyDown(KeyCode.C)) ToggleCharacterJournal();
             if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu();
@@ -42,5 +46,14 @@ namespace Scars.Controls
         public void TogglePauseMenu() { _commands?.TogglePauseMenu(); }
 
         public void Back() { _commands?.Back(); }
+
+        static bool IsHypothesisPhase
+        {
+            get
+            {
+                var phase = GameManager.Instance != null ? GameManager.Instance.Flow.CurrentPhase : null;
+                return phase != null && phase.kind == PhaseKind.Hypothesis;
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Scars.Core;
 using Scars.Data;
 
 namespace Scars.Hypothesis
@@ -61,6 +62,30 @@ namespace Scars.Hypothesis
                  + KoreanJosa.Attach(Phrase(HypothesisSlot.Motive), "을", "를") + " 꾀했다.";
         }
 
+        // 조립 중 실시간 문장. 빈 칸은 [행위자]처럼 칸 이름과 은/는처럼 조사 둘 다, 다 차면 BuildSentence와 같다
+        public string BuildDraftSentence()
+        {
+            return Part(HypothesisSlot.Actor, "[행위자]", "은", "는") + " "
+                 + Part(HypothesisSlot.Means, "[수단]", "을", "를") + " 통해 "
+                 + Part(HypothesisSlot.Motive, "[동기]", "을", "를") + " 꾀했다.";
+        }
+
+        // 제출 버튼에 보일 판정. 강제 가설 단계면 빈 칸이 있어도 미완성 제출, 아니면 다 차야 한다. 제출할 수 없으면 null
+        public HypothesisResult Preview(IEnumerable<HypothesisRuleData> rules, bool forced)
+        {
+            return forced ? EvaluateForced(rules) : Evaluate(rules);
+        }
+
+        // 조건(unlock)을 만족해 손패에 나오는 카드, 넣은 순서대로
+        public static List<HypothesisCardData> UnlockedCards(IEnumerable<HypothesisCardData> cards, GameState state)
+        {
+            var unlocked = new List<HypothesisCardData>();
+            if (cards == null) return unlocked;
+            foreach (var card in cards)
+                if (card != null && (card.unlock == null || card.unlock.IsMet(state))) unlocked.Add(card);
+            return unlocked;
+        }
+
         // 규칙에 있는 조합이면 그 판정, 없으면 모순 가설. 슬롯이 다 차지 않았으면 null
         public HypothesisResult Evaluate(IEnumerable<HypothesisRuleData> rules)
         {
@@ -82,6 +107,12 @@ namespace Scars.Hypothesis
         {
             if (IsComplete) return Evaluate(rules);
             return new HypothesisResult { Kind = HypothesisKind.Contradiction, Incomplete = true };
+        }
+
+        string Part(HypothesisSlot slot, string blank, string withBatchim, string withoutBatchim)
+        {
+            if (ReferenceEquals(_slots[(int)slot], null)) return blank + " " + withBatchim + "/" + withoutBatchim;
+            return KoreanJosa.Attach(Phrase(slot), withBatchim, withoutBatchim);
         }
 
         string Phrase(HypothesisSlot slot)

@@ -13,5 +13,7 @@ namespace Scars.Data
         [Tooltip("문장에 들어갈 표현 (조사 은/는·을/를은 자동으로 붙음)")]
         public string phrase;
         public Condition unlock = new Condition();
+        [Tooltip("카드 그림. 비우면 글자(label)만 나온다")]
+        public Sprite image;
     }
 }
