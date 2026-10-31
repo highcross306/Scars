@@ -334,5 +334,29 @@ namespace Scars.Tests
             Assert.AreEqual("e4", reached);
             Assert.IsTrue(r.IsFinished);
         }
+
+        // ── 화면이 쓰는 상태 ──
+
+        [Test]
+        public void HasChoices_OnlyWhenAChoiceIsShown()
+        {
+            var state = new GameState();
+            var r = Run(MakeDialogue("a", Node("a", "b", Choice("b", needFlags: new[] { "f" })), Node("b", null, Choice(null))), state);
+
+            Assert.IsFalse(r.HasChoices);
+            Assert.IsTrue(r.Advance());
+            Assert.IsTrue(r.HasChoices);
+            Assert.IsTrue(r.Choose(0));
+            Assert.IsFalse(r.HasChoices);
+        }
+
+        [Test]
+        public void IsEvidenceChoice_TrueOnlyWithPresentCards()
+        {
+            Assert.IsTrue(DialogueRunner.IsEvidenceChoice(Choice("a", present: new[] { "clue" })));
+            Assert.IsFalse(DialogueRunner.IsEvidenceChoice(Choice("a")));
+            Assert.IsFalse(DialogueRunner.IsEvidenceChoice(Choice("a", present: new[] { "" })));
+            Assert.IsFalse(DialogueRunner.IsEvidenceChoice(null));
+        }
     }
 }

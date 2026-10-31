@@ -11,6 +11,8 @@ namespace Scars.Data
     {
         public string displayName;
         public string role;
+        [Tooltip("대화창 초상화. 비우면 이름만 나온다")]
+        public Sprite portrait;
         [TextArea] public string identity;
         [TextArea] public string impression;
         public List<ProfileMemo> memos = new List<ProfileMemo>();

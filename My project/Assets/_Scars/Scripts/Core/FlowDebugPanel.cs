@@ -46,7 +46,7 @@ namespace Scars.Core
             }
             else if (flow.Dialogue != null)
             {
-                DrawDialogue(flow);
+                GUILayout.Label("대화 중 (대화창에서 진행)");
             }
             else
             {
@@ -55,24 +55,6 @@ namespace Scars.Core
 
             GUILayout.EndScrollView();
             GUILayout.EndArea();
-        }
-
-        static void DrawDialogue(GameFlow flow)
-        {
-            var node = flow.Dialogue.Current;
-            if (node == null) return;
-            GUILayout.Label(string.IsNullOrEmpty(node.speakerId) ? "(내레이션)" : $"[{node.speakerId}]");
-            GUILayout.Label(node.text);
-            GUILayout.Space(10f);
-
-            var choices = flow.Dialogue.AvailableChoices();
-            if (choices.Count == 0)
-            {
-                if (GUILayout.Button("다음")) flow.Dialogue.Advance();
-                return;
-            }
-            for (int i = 0; i < choices.Count; i++)
-                if (GUILayout.Button(choices[i].text)) flow.Dialogue.Choose(i);
         }
 
         static void DrawPhase(GameManager manager, GameFlow flow, PhaseData phase)

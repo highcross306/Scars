@@ -22,6 +22,6 @@ MonoBehaviour:
     setFlags: []
     endingId: 
   nextPhaseId: test-phase-4
-  timeLimitSeconds: 30
+  timeLimitSeconds: 420
   timeoutDialogueId: test-dialogue-timeout
   timeoutPhaseId: test-phase-4

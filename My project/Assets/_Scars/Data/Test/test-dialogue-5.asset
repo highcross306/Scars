@@ -24,6 +24,17 @@ MonoBehaviour:
       endingId: 
     nextId: 
     choices:
+    - text: "\uC99D\uAC70\uB97C \uB0B4\uBBFC\uB2E4 (\uB2E8\uC11C 1\uC774 \uB9DE\uC74C)"
+      condition:
+        requiredFlags: []
+        requiredClueIds: []
+      presentClueIds:
+      - test-clue-1
+      effect:
+        giveClueIds: []
+        setFlags: []
+        endingId: 
+      nextId: n2
     - text: "[\uC815\uD569 \uAC00\uC124\uC77C \uB54C\uB9CC \uBCF4\uC784] \uC5D4\uB529
         A\uB85C"
       condition:
@@ -46,3 +57,12 @@ MonoBehaviour:
         setFlags: []
         endingId: test-ending-b
       nextId: 
+  - id: n2
+    speakerId: test-character-1
+    text: "[\uD14C\uC2A4\uD2B8] \uC99D\uAC70\uB97C \uBCF4\uACE0 \uBC18\uC751\uD55C\uB2E4"
+    onEnter:
+      giveClueIds: []
+      setFlags: []
+      endingId: 
+    nextId: n1
+    choices: []

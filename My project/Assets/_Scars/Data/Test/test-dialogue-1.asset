@@ -16,7 +16,7 @@ MonoBehaviour:
   startNodeId: n1
   nodes:
   - id: n1
-    speakerId: 
+    speakerId: test-character-1
     text: "[\uD14C\uC2A4\uD2B8] \uC0AC\uBB34\uC18C \uB300\uC0AC 1"
     onEnter:
       giveClueIds: []

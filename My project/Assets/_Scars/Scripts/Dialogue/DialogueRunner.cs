@@ -20,6 +20,12 @@ namespace Scars.Dialogue
 
         public bool IsFinished => Current == null;
 
+        // 지금 대사에 보이는 선택지가 있다 (있으면 Advance 대신 고른다)
+        public bool HasChoices => Current != null && HasAvailableChoice();
+
+        // 증거 제시 선택지: Choose로는 못 고르고 Present(카드)로만 진행한다
+        public static bool IsEvidenceChoice(DialogueChoice choice) { return choice != null && NeedsClues(choice); }
+
         public void Start(DialogueData dialogue, GameState state)
         {
             _state = state;
